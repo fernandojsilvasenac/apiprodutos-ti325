@@ -5,5 +5,12 @@
     "quantidade": 5,
     "preco": 7.99,
     "total": 39.95
+  },
+  {
+    "codigo": 102,
+    "nome": "PASTA D'ENTE",
+    "quantidade": 6,
+    "preco": 13.79,
+    "total": 82.74
   }
 ]
