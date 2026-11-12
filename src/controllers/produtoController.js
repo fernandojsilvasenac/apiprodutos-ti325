@@ -5,6 +5,7 @@ const produtoController = {
         const { codigo, nome, qtde, preco} = req.body;
         // Validação simples dos campos obrigatórios
         if(!codigo || !nome || !qtde || !preco){
+            console.log(req.body)
             return res.status(400).json({
                 sucesso:false,
                 mensagem: "Todos os campos (codigo, nome, qtde, preco) são obrigatórios!"
