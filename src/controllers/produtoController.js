@@ -1,48 +1,65 @@
-const produtoModel = require('../models/produtoModel');
+// src/controllers/produtoController.js
+const ProdutoModel = require('../models/produtoModel');
 
 const produtoController = {
-    criarProduto: (req, res) =>{    
-        const { codigo, nome, qtde, preco} = req.body;
-        // Validação simples dos campos obrigatórios
-        if(!codigo || !nome || !qtde || !preco){
-            console.log(req.body)
-            return res.status(400).json({
-                sucesso:false,
-                mensagem: "Todos os campos (codigo, nome, qtde, preco) são obrigatórios!"
-            })
-        }
-        //Transformar e calcular os dados
-        const nomeMaiusculo = String(nome).toUpperCase();
-        const quantidade = Number(qtde);
-        const valorPreco = Number(preco);
-        const valorTotal = quantidade * valorPreco;
-
-        const novoProduto ={
-            codigo,
-            nome: nomeMaiusculo,
-            quantidade: quantidade,
-            preco: valorPreco,
-            total: valorTotal,
-            criadoEm: new Date().toISOString()
-        }
-
-        // Chama o Model para persistir no arquivo JSON
-        const produtoSalvo = produtoModel.salvar(novoProduto);
-
-        // Retorna a resposta HTTP 201 (Created)
-        return res.status(201).json({
-            sucesso:true,
-            mensagem: "Produto cadastrado com sucesso!",
-            produto: produtoSalvo            
-        })
-    },
-    listarProdutos: (req, res) =>{
-        const produtos = produtoModel.buscarTodos();
-        return res.json({
-            sucesso: true,
-            total: produtos.length,
-            produtos      
-        })
+  // Método para listar (buscarTodos)
+  buscarTodos: async (req, res) => {
+    try {
+      const produtos = await ProdutoModel.findMany();
+      return res.json({
+        sucesso: true,
+        total: produtos.length,
+        produtos
+      });
+    } catch (error) {
+      return res.status(500).json({ sucesso: false, erro: error.message });
     }
-}
+  },
+
+  // Método para cadastrar (salvar)
+  salvar: async (req, res) => {
+    try {
+      const { codigo, nome, quantidade, preco } = req.body;
+
+      if (!codigo || !nome || quantidade === undefined || preco === undefined) {
+        return res.status(400).json({
+          sucesso: false,
+          mensagem: 'Todos os campos são obrigatórios!'
+        });
+      }
+
+      const nomeMaiusculo = String(nome).toUpperCase();
+      const qtdNum = Number(quantidade);
+      const precoNum = Number(preco);
+      const valorTotal = Number((qtdNum * precoNum).toFixed(2)); //correção para arredondar o total para 2 casas decimais
+
+      // Salva diretamente utilizando a Model Estática
+      const novoProduto = await ProdutoModel.create({
+        data: {
+          codigo: Number(codigo),
+          nome: nomeMaiusculo,
+          quantidade: qtdNum,
+          preco: precoNum,
+          total: valorTotal
+        }
+      });
+
+      return res.status(201).json({
+        sucesso: true,
+        mensagem: 'Produto cadastrado com sucesso no MySQL!',
+        produto: novoProduto
+      });
+    } catch (error) {
+      // Tratamento amigável caso tente cadastrar um código duplicado
+      if (error.code === 'P2002') {
+        return res.status(409).json({
+          sucesso: false,
+          mensagem: 'Já existe um produto cadastrado com este código!'
+        });
+      }
+      return res.status(500).json({ sucesso: false, erro: error.message });
+    }
+  }
+};
+
 module.exports = produtoController;
